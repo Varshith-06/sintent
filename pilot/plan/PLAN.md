@@ -1,9 +1,8 @@
-# Pilot plan (to be frozen before the full run)
+# Pilot plan
 
-Status: **DRAFT, not yet frozen.** Freeze it in week 2, after the smoke test and transcript reading and
-before the full run: review the smoke-test section, set the status line to `FROZEN <date>`, and commit.
-The commit date is the pre-registration timestamp. Nothing below may change after that commit. If something
-must change, add a dated "Deviations" entry at the bottom and report it in the write-up.
+Status: **FROZEN 2026-10-25**, before the full run (`pilot_main`). The commit that set this line is the
+pre-registration timestamp. Nothing below may change after it. If something must change, add a dated
+"Deviations" entry at the bottom and report it in the write-up.
 
 ## Question
 
