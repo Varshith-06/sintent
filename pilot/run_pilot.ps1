@@ -12,13 +12,18 @@ function Step($name, $cmd) { Write-Host "`n=== $name ===" -ForegroundColor Cyan;
 
 if ($Stage -in "all", "rollout") {
     if (-not (Test-Path data\worlds.jsonl)) { Step "build worlds" @("-m", "pilot.worlds.build_worlds") }
-    Step "rollout (960 episodes)" @("-m", "pilot.rollout.run", "--backend", "server", "--model", $Model, "--run", $Run, "--workers", "4")
+    # Resumable, so a crash (or the server staying down past the client's retries) just reruns it.
+    for ($i = 1; $i -le 10; $i++) {
+        try { Step "rollout (960 episodes), attempt $i" @("-m", "pilot.rollout.run", "--backend", "server", "--model", $Model, "--run", $Run, "--workers", "4"); break }
+        catch { if ($i -eq 10) { throw }; Write-Host "$_; retrying in 60 s" -ForegroundColor Yellow; Start-Sleep 60 }
+    }
 }
 if ($Stage -in "all", "belief") {
     Step "belief check" @("-m", "pilot.belief.check", "--run", $Run, "--backend", "server", "--model", $Model)
 }
 if ($Stage -in "all", "replay") {
-    if (Get-Process llama-server -ErrorAction SilentlyContinue) { Write-Host "Stopping llama-server to free the GPU"; Stop-Process -Name llama-server }
+    New-Item -ItemType File -Force data\server.stop | Out-Null  # ends start-server.ps1's restart loop
+    if (Get-Process llama-server -ErrorAction SilentlyContinue) { Write-Host "Stopping llama-server to free the GPU"; Stop-Process -Name llama-server; Start-Sleep 10 }
     Step "replay equivalence (5 episodes)" @("-m", "pilot.replay.activations", "--run", $Run, "--model", $Model, "--equivalence", "5")
     Step "teacher-forced replay" @("-m", "pilot.replay.activations", "--run", $Run, "--model", $Model)
 }

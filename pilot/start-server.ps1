@@ -18,7 +18,9 @@ if (-not (Test-Path $gguf)) {
     & .venv\Scripts\hf.exe download unsloth/Qwen3.5-9B-GGUF Qwen3.5-9B-Q4_K_M.gguf --local-dir tools\models
 }
 $ErrorActionPreference = "Continue"
-while ($true) {
+# run_pilot.ps1 creates data\server.stop before replay, which needs the GPU; the loop then ends.
+Remove-Item data\server.stop -ErrorAction SilentlyContinue
+while (-not (Test-Path data\server.stop)) {
     & $bin -m $gguf -ngl 99 -c 32768 -np 4 --port 8080 -fa on --jinja --no-webui -ctk q8_0 -ctv q8_0 -b 1024 -ub 256
     Write-Host "llama-server exited ($LASTEXITCODE); restarting in 5 s" -ForegroundColor Yellow
     Start-Sleep 5
