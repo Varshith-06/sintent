@@ -108,3 +108,8 @@ fewer than 10, R1 recall on all test-half x− decision states is used as a labe
   The 66 completed episodes were kept; the run resumed from episode 67. Episodes in flight at the crash were
   discarded and rerun. Sampling settings are unchanged; the KV-cache precision differs between the first 66
   episodes and the rest.
+- 2026-10-25/26, operational only: the run was stopped twice by the host (low system RAM, at 167 and 245
+  episodes) and llama-server ran out of GPU memory once more (about 00:38, 462 episodes); each time the run
+  resumed from the saved episodes and episodes in flight were rerun. The replay stage was relaunched once
+  after a launcher bug (stderr from a progress bar treated as fatal), with no change to the method.
+- The 30 blind hand labels for the belief check are not yet done, so belief-check agreement is not reported.

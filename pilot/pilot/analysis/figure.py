@@ -109,14 +109,14 @@ def main():
                 pc.set_edgecolor("none")
         b.scatter(i + rng.uniform(-0.12, 0.12, len(v)), v, s=14, color=WORLD_TONE[w], edgecolor=SURFACE, lw=0.6,
                   zorder=3)
-        b.text(i, b.get_ylim()[0], f"n={len(v)}", ha="center", va="top", fontsize=8, color=INK2)
     if not any(len(dist.get(w, [])) for w in worlds):
         b.text(0.5, 0.5, "R1 not fit (too few decision states)", transform=b.transAxes, ha="center", color=INK2)
     thr = res["thresholds"]["R1@0.05"]
     if not np.isnan(thr):
         b.axhline(thr, color=INK2, lw=1, ls="--", zorder=1)
         b.text(len(worlds) - 0.5, thr, " 5% false-alarm\n threshold", va="center", fontsize=8, color=INK2)
-    b.set_xticks(range(4), ["x+\nauthorized", "x−\nknowing", "x−F\nforged approval", "x−N\nnuisance"])
+    names = ["x+\nauthorized", "x−\nknowing", "x−F\nforged approval", "x−N\nnuisance"]
+    b.set_xticks(range(4), [f"{lab}\nn={len(dist.get(w, []))}" for lab, w in zip(names, worlds)])
     b.set_ylabel("R1 readout score (z, higher = 'forbidden')")
     b.yaxis.grid(True, color=GRID, lw=0.8, zorder=0)
     b.set_title("(b) R1 at the decision point, test half", loc="left", fontsize=10.5, color=INK)

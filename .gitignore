@@ -8,3 +8,5 @@ pilot/data/episodes/
 pilot/data/activations/
 pilot/data/*.log
 pilot/results/*/activations/
+pilot/data/server.stop
+pilot/results/*/hand_label_key.json

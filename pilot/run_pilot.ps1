@@ -8,7 +8,12 @@ $py = "$PSScriptRoot\.venv\Scripts\python.exe"
 $env:PYTHONIOENCODING = "utf-8"
 Set-Location $PSScriptRoot
 
-function Step($name, $cmd) { Write-Host "`n=== $name ===" -ForegroundColor Cyan; & $py @cmd; if ($LASTEXITCODE) { throw "$name failed" } }
+# "Continue" inside Step: with output redirected, PowerShell 5.1 turns a native program's stderr (progress
+# bars) into error records, which "Stop" would treat as fatal. The exit code decides failure instead.
+function Step($name, $cmd) {
+    $ErrorActionPreference = "Continue"
+    Write-Host "`n=== $name ===" -ForegroundColor Cyan; & $py @cmd; if ($LASTEXITCODE) { throw "$name failed" }
+}
 
 if ($Stage -in "all", "rollout") {
     if (-not (Test-Path data\worlds.jsonl)) { Step "build worlds" @("-m", "pilot.worlds.build_worlds") }
