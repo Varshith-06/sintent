@@ -90,7 +90,8 @@ def main():
     a.legend(frameon=False, loc="upper left", ncol=len(monitors), fontsize=9)
     h = res["headline"]
     a.set_title(f"(a) Who catches what. Headline gap S − R1 = {h['gap']:.2f} "
-                f"[{h['ci'][0]:.2f}, {h['ci'][1]:.2f}], n = {h['n']}" if h["n"] else "(a) Who catches what",
+                f"[{h['ci'][0]:.2f}, {h['ci'][1]:.2f}], n = {h['n']}" if h["n"] and not np.isnan(h["gap"])
+                else "(a) Who catches what",
                 loc="left", fontsize=10.5, color=INK)
 
     dist = res["R1_dist_test"]
@@ -109,6 +110,8 @@ def main():
         b.scatter(i + rng.uniform(-0.12, 0.12, len(v)), v, s=14, color=WORLD_TONE[w], edgecolor=SURFACE, lw=0.6,
                   zorder=3)
         b.text(i, b.get_ylim()[0], f"n={len(v)}", ha="center", va="top", fontsize=8, color=INK2)
+    if not any(len(dist.get(w, [])) for w in worlds):
+        b.text(0.5, 0.5, "R1 not fit (too few decision states)", transform=b.transAxes, ha="center", color=INK2)
     thr = res["thresholds"]["R1@0.05"]
     if not np.isnan(thr):
         b.axhline(thr, color=INK2, lw=1, ls="--", zorder=1)

@@ -12,6 +12,8 @@ import json
 import urllib.request
 from dataclasses import dataclass, field
 
+from ..config import ROOT
+
 
 @dataclass
 class Generation:
@@ -35,15 +37,26 @@ class HFBackend:
         self.torch = torch
         self.tok = load_tokenizer(model_id)
         kw = {"dtype": torch.bfloat16, "device_map": "cuda"}
+        # Quantizing 9B bf16 weights on load takes minutes; keep an NF4 copy after the first load.
+        cache = ROOT / "tools" / "models" / (model_id.replace("/", "--") + "-nf4")
+        src = model_id
         if quant == "4bit":
-            kw["quantization_config"] = BitsAndBytesConfig(
-                load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_use_double_quant=True,
-                bnb_4bit_compute_dtype=torch.bfloat16)
+            if (cache / "config.json").exists():
+                src = str(cache)
+            else:
+                kw["quantization_config"] = BitsAndBytesConfig(
+                    load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_use_double_quant=True,
+                    bnb_4bit_compute_dtype=torch.bfloat16)
         try:
-            self.model = AutoModelForCausalLM.from_pretrained(model_id, **kw)
+            self.model = AutoModelForCausalLM.from_pretrained(src, **kw)
         except (ValueError, KeyError):
             from transformers import AutoModelForImageTextToText
-            self.model = AutoModelForImageTextToText.from_pretrained(model_id, **kw)
+            self.model = AutoModelForImageTextToText.from_pretrained(src, **kw)
+        if quant == "4bit" and src == model_id:
+            try:
+                self.model.save_pretrained(cache)
+            except Exception as e:  # the cache is an optimization only
+                print(f"could not cache NF4 weights: {e}")
         self.model.eval()
         self.sampling = dict(do_sample=temperature > 0, temperature=temperature or None, top_p=top_p, top_k=top_k)
         self.think_budget = think_budget

@@ -76,6 +76,11 @@ def crossfit_scores(train_X, train_y, train_t, train_groups, apply_X, apply_t, a
     rng.shuffle(groups)
     fold_of = {g: i % n_folds for i, g in enumerate(groups)}
     tf = np.array([fold_of[g] for g in train_groups])
+    for k in range(n_folds):
+        ys = train_y[tf != k]
+        if len(ys) < 4 or len(set(ys.tolist())) < 2:
+            raise ValueError(f"too few training states for cross-fitting (fold {k}: {len(ys)} states, "
+                             f"classes {sorted(set(ys.tolist()))})")
     models = [Readout().fit(train_X[tf != k], train_y[tf != k], train_t[tf != k]) for k in range(n_folds)]
     scores = np.zeros(len(apply_X))
     in_train = np.array([g in fold_of for g in apply_groups])
@@ -129,7 +134,11 @@ def main():
     ap.add_argument("--run", required=True)
     args = ap.parse_args()
     rows, layers = load_states(args.run)
-    r1, n_train = run_r1(rows)
+    try:
+        r1, n_train = run_r1(rows)
+    except ValueError as e:
+        print(f"R1 not fit: {e}")
+        return
     tmpl_of = {r["ep"]["episode_id"]: r["ep"]["template"] for r in rows}
     loto = {}
     for tmpl in sorted(set(tmpl_of.values())):

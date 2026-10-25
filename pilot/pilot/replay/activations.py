@@ -53,13 +53,34 @@ def read_positions(ep) -> dict[str, int]:
 
 
 class Replayer:
-    def __init__(self, model_id, quant="4bit"):
+    def __init__(self, model_id, quant="4bit", full=False):
+        """full=False keeps only the decoder layers the readouts read, and no LM head, so the model
+        fits in 8 GB without Windows paging VRAM to system memory. full=True keeps everything
+        (needed for log-probabilities in the replay-equivalence check)."""
         from ..rollout.backends import HFBackend
+        import torch.nn as nn
         b = HFBackend(model_id, quant=quant)
         self.model, self.tok, self.torch = b.model, b.tok, b.torch
         layers = decoder_layers(self.model)
         n = len(layers)
         self.layer_ids = sorted({min(n - 1, round(f * n)) for f in DEPTH_FRACTIONS})
+        # bitsandbytes leaves the 248k-vocab embedding in bf16 (2 GB): look tokens up on the CPU.
+        emb = self.model.get_input_embeddings()
+        self.embed_cpu = nn.Embedding.from_pretrained(emb.weight.detach().to("cpu", copy=True))
+        tied = emb.weight is getattr(self.model.get_output_embeddings(), "weight", None)
+        if not tied:
+            self.model.set_input_embeddings(nn.Embedding(1, emb.weight.shape[1]).to(emb.weight.device))
+        if not full:
+            keep = max(self.layer_ids) + 1
+            del layers[keep:]
+            cfg = getattr(self.model.config, "text_config", self.model.config)
+            cfg.num_hidden_layers = keep
+            if hasattr(cfg, "layer_types"):
+                cfg.layer_types = cfg.layer_types[:keep]
+            if not tied:
+                self.model.lm_head = nn.Identity()
+        del emb
+        self.torch.cuda.empty_cache()
         self.captured = {}
         for li in self.layer_ids:
             layers[li].register_forward_hook(self._hook(li))
@@ -77,13 +98,14 @@ class Replayer:
         self.want, self.captured = positions, {}
         end = (max(positions) + 1) if (positions and not want_logprobs) else len(ids)
         inp = torch.tensor([ids[:end]], device=self.model.device)
+        embeds = self.embed_cpu(torch.tensor([ids[:end]])).to(self.model.device, torch.bfloat16)
         final = {}
         handle = None
         if want_logprobs:  # full-vocab logits for 8k tokens do not fit in 8 GB: keep the final hidden states
             norm = self.model.get_decoder().norm
             handle = norm.register_forward_hook(lambda m, i, o: final.__setitem__("h", o))
         with torch.no_grad():
-            self.model(input_ids=inp, use_cache=False, logits_to_keep=1)
+            self.model(inputs_embeds=embeds, use_cache=False, logits_to_keep=1)
             lps = None
             if want_logprobs:
                 handle.remove()
@@ -120,7 +142,7 @@ def main():
     args = ap.parse_args()
 
     eps = load_episodes(args.run)
-    rep = Replayer(args.model, args.quant)
+    rep = Replayer(args.model, args.quant, full=bool(args.equivalence))
     if args.equivalence:
         mad, n = equivalence(rep, [e for e in eps if any(s["lp"] for s in e["gen_logprobs"])], args.equivalence)
         print(f"replay equivalence: mean |dlogprob| = {mad:.4f} over {n} generated tokens "

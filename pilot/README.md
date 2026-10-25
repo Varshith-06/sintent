@@ -64,8 +64,8 @@ Single steps, for smoke tests:
 ```
 
 Measured speeds on the RTX 4060 laptop GPU: llama.cpp Q4_K_M about 28 tokens/s per stream, with four
-parallel streams; transformers + bitsandbytes 4-bit about 3.5 tokens/s (usable for replay, which is one
-forward pass per episode, but too slow for generation).
+parallel streams; transformers + bitsandbytes 4-bit about 3.5 tokens/s (too slow for generation). Replay is
+one forward pass per episode through layers 0–22 only: about 1.5 s per episode in 3.3 GB.
 
 ## Limits to state in every write-up
 
