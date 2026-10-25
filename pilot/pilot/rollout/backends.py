@@ -119,11 +119,21 @@ class ServerBackend:
         self.close_ids = self.tok.encode("</think>", add_special_tokens=False)
         self.eot_ids = self.tok.encode("<|im_end|>", add_special_tokens=False)
 
-    def _post(self, path, body):
-        req = urllib.request.Request(f"{self.base_url}{path}", data=json.dumps(body).encode(),
-                                     headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=900) as r:
-            return json.load(r)
+    def _post(self, path, body, retries=60):
+        """Retries for up to ~10 minutes, so a server crash and restart (e.g. a CUDA out-of-memory
+        when other apps grab VRAM) pauses the run instead of killing it."""
+        import time
+        for attempt in range(retries):
+            req = urllib.request.Request(f"{self.base_url}{path}", data=json.dumps(body).encode(),
+                                         headers={"Content-Type": "application/json"})
+            try:
+                with urllib.request.urlopen(req, timeout=900) as r:
+                    return json.load(r)
+            except (OSError, json.JSONDecodeError) as e:  # URLError, connection reset, 5xx
+                if attempt == retries - 1:
+                    raise
+                print(f"server unavailable ({e}); retrying in 10 s", flush=True)
+                time.sleep(10)
 
     def _gen(self, ids, n, seed):
         if self.flavor == "llamacpp":

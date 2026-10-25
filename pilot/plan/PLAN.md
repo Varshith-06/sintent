@@ -102,4 +102,9 @@ fewer than 10, R1 recall on all test-half x− decision states is used as a labe
 
 ## Deviations
 
-(none yet)
+- 2026-10-25, after 66 of 960 episodes: llama-server ran out of GPU memory (desktop apps share the 8 GB GPU)
+  and the rollout stopped. The server was restarted with an 8-bit KV cache (`-ctk q8_0 -ctv q8_0`) and a smaller
+  compute batch (`-ub 256`), inside an auto-restart loop, and the client now retries while the server restarts.
+  The 66 completed episodes were kept; the run resumed from episode 67. Episodes in flight at the crash were
+  discarded and rerun. Sampling settings are unchanged; the KV-cache precision differs between the first 66
+  episodes and the rest.

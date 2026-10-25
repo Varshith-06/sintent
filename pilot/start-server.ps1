@@ -1,6 +1,7 @@
 # Serve Qwen3.5-9B (Q4_K_M) with llama.cpp on the local GPU: 4 parallel slots x 8,192 tokens.
 #   powershell -ExecutionPolicy Bypass -File start-server.ps1
-# Downloads llama.cpp (CUDA 13.4 build) and the GGUF on first use.
+# Downloads llama.cpp (CUDA 13.4 build) and the GGUF on first use. Restarts the server if it dies
+# (desktop apps share the 8 GB GPU and can push it out of memory); the rollout client retries.
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 $bin = "tools\llama.cpp\bin\llama-server.exe"
@@ -16,4 +17,9 @@ if (-not (Test-Path $bin)) {
 if (-not (Test-Path $gguf)) {
     & .venv\Scripts\hf.exe download unsloth/Qwen3.5-9B-GGUF Qwen3.5-9B-Q4_K_M.gguf --local-dir tools\models
 }
-& $bin -m $gguf -ngl 99 -c 32768 -np 4 --port 8080 -fa on --jinja --no-webui
+$ErrorActionPreference = "Continue"
+while ($true) {
+    & $bin -m $gguf -ngl 99 -c 32768 -np 4 --port 8080 -fa on --jinja --no-webui -ctk q8_0 -ctv q8_0 -b 1024 -ub 256
+    Write-Host "llama-server exited ($LASTEXITCODE); restarting in 5 s" -ForegroundColor Yellow
+    Start-Sleep 5
+}
