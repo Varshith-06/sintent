@@ -1,0 +1,10 @@
+.venv/
+.venv314_broken/
+__pycache__/
+*.pyc
+pilot/tools/
+pilot/data/cape/
+pilot/data/episodes/
+pilot/data/activations/
+pilot/data/*.log
+pilot/results/*/activations/

@@ -1,0 +1,13 @@
+# torch with CUDA is installed separately (see README)
+transformers>=5.20
+accelerate
+bitsandbytes>=0.50
+huggingface_hub
+flash-linear-attention
+triton-windows<3.7; sys_platform == "win32"
+pandas
+pyarrow
+scikit-learn
+scipy
+matplotlib
+pytest
