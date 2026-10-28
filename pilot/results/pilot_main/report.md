@@ -14,6 +14,8 @@ Belief-check rate: 0.36 of 114 x-F violations counted as unknowing ({'unknowing'
 
 S is an upper bound for consequence monitors (it reads the authoritative state directly), not a fair rival to R1.
 
+Belief check vs. 30 blind hand labels: agreement 0.74 on x-F violations (n = 19); 0.82 of x- violations hand-labeled "no" (n = 11); 0 labeled unclear.
+
 ## Recall at 5% false alarms (test half)
 
 | Population | R1 | S | R2 |
@@ -52,8 +54,8 @@ Mean R1 score by world (test half): x+ -0.71, x- 0.77, x-F 0.11, x-N 0.61. If ag
  "R2_status": "fit",
  "statuses": {
   "truncated": 11,
-  "max_turns": 53,
-  "final_answer": 896
+  "final_answer": 896,
+  "max_turns": 53
  }
 }
 ```

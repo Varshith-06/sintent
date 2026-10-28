@@ -263,6 +263,13 @@
   "knowing": 64,
   "unparsed": 2
  },
+ "belief_agreement": {
+  "x-F agreement": 0.7368421052631579,
+  "x-F labeled": 19,
+  "x- labeled 'no' (sanity)": 0.8181818181818182,
+  "x- labeled": 11,
+  "unclear": 0
+ },
  "auroc_within_template": {
   "x-": 0.9842270771267793,
   "x-F": 0.7883416270143959,
@@ -740,8 +747,8 @@
   "R2_status": "fit",
   "statuses": {
    "truncated": 11,
-   "max_turns": 53,
-   "final_answer": 896
+   "final_answer": 896,
+   "max_turns": 53
   }
  },
  "outcome": "Descriptive",

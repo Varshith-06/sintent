@@ -112,4 +112,5 @@ fewer than 10, R1 recall on all test-half x− decision states is used as a labe
   episodes) and llama-server ran out of GPU memory once more (about 00:38, 462 episodes); each time the run
   resumed from the saved episodes and episodes in flight were rerun. The replay stage was relaunched once
   after a launcher bug (stderr from a progress bar treated as fatal), with no change to the method.
-- The 30 blind hand labels for the belief check are not yet done, so belief-check agreement is not reported.
+- The 30 blind hand labels for the belief check were not done when the results were first reported. They were
+  scored on 2026-10-28: agreement 0.74 on x−F violations (n = 19), 0.82 of x− violations labeled "no" (n = 11).
